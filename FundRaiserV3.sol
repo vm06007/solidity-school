@@ -126,7 +126,11 @@ contract WiseFundRaiser {
         pure
         returns (uint256)
     {
-        return _isOverflow(_tokenAmount, _totalFunded, _thresholdAmount)
+        return _isOverflow(
+            _tokenAmount, 
+            _totalFunded, 
+            _thresholdAmount
+        )
             ? _thresholdAmount - _totalFunded
             : _tokenAmount;
     }
@@ -144,17 +148,9 @@ contract WiseFundRaiser {
             'WiseFundRaiser: funds raised'
         );
 
-        uint256 refundAmount = balanceMap[msg.sender];
-        balanceMap[msg.sender] = 0;
-
         _refundTokens(
             msg.sender,
-            refundAmount
-        );
-
-        emit Refund (
-            msg.sender,
-            refundAmount
+            balanceMap[msg.sender]
         );
     }
 
@@ -203,6 +199,8 @@ contract WiseFundRaiser {
     )
         private
     {
+        balanceMap[_refundAddress] = 0;
+        
         WISE_TOKEN.transfer(
             _refundAddress,
             _refundAmount

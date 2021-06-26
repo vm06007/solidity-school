@@ -13,6 +13,18 @@ interface ITokenContract {
     (
         bool success
     );
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    )
+        external
+        returns
+    (
+        bool success
+    );    
+    
 }
 
 contract WiseFundRaiser {
@@ -25,7 +37,7 @@ contract WiseFundRaiser {
 
     uint256 public totalFunded;
     
-    mapping(address => uint256) balanceMap;
+    mapping(address => uint256) public balanceMap;
 
     event Claim (
         address indexed fundOwner, 
@@ -80,10 +92,17 @@ contract WiseFundRaiser {
             block.timestamp < TIMESTAMP,
             'WiseFundRaiser: closed'
         );
-        
-        uint256 tokenAmount = _checkRefund(
+
+        uint256 tokenAmount = _adjustAmount(
             totalFunded,
-            _tokenAmount
+            _tokenAmount,
+            THRESHOLD
+        );
+
+        WISE_TOKEN.transferFrom(
+            msg.sender,
+            address(this),
+            tokenAmount
         );
 
         totalFunded =
@@ -98,31 +117,18 @@ contract WiseFundRaiser {
         );
     }
 
-    function _checkRefund(
+    function _adjustAmount(
         uint256 _totalFunded,
-        uint256 _tokenAmount
-    )
-        private
-        returns (uint256)
-    {
-        return _isOverflow(_tokenAmount, _totalFunded, THRESHOLD)
-            ? _doRefund(_tokenAmount, THRESHOLD - _totalFunded)
-            : _tokenAmount;
-    }
-
-    function _doRefund(
         uint256 _tokenAmount,
-        uint256 _requiredAmount
+        uint256 _thresholdAmount
     )
         private
+        pure
         returns (uint256)
     {
-        _refundTokens(
-            msg.sender,
-            _tokenAmount - _requiredAmount
-        );
-        
-        return _requiredAmount;
+        return _isOverflow(_tokenAmount, _totalFunded, _thresholdAmount)
+            ? _thresholdAmount - _totalFunded
+            : _tokenAmount;
     }
 
     function refundTokens()

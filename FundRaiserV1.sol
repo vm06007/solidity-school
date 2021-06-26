@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+//do you need to have the contract you are interfacing with in the same folder or you can interface with any contract? What if contracts are the same name? 
 interface ITokenContract {
 
     function transfer(
@@ -18,7 +19,6 @@ interface ITokenContract {
 contract WiseFundRaiser {
 
     address public immutable FUND_OWNER;
-    address public immutable WISE_TOKEN_A;
 
     ITokenContract public immutable WISE_TOKEN;
 
@@ -28,6 +28,32 @@ contract WiseFundRaiser {
     uint256 public totalFunded;
 
     mapping(address => uint256) balanceMap;
+    
+    uint256 internal callCounter; 
+    bool hasBeenClaimed; 
+
+    event Claim (
+        address indexed fundOwner, 
+        uint256 totalFunded 
+    ); 
+
+    event Refund (
+        address indexed refundAddress,
+        uint256 amount
+    );
+
+    event Fund (
+        address indexed funder,
+        uint256 tokenAmount,
+        uint256 refundAmount
+        //question
+    );
+
+    event Fundraiser (
+        address indexed fundOwner,
+         uint256 amount, 
+        uint256 timestamp
+    );
 
     constructor(
         address _fundOwner,
@@ -46,6 +72,11 @@ contract WiseFundRaiser {
         TIMESTAMP = block.timestamp + _timeAmount;
 
         // events
+        emit Fundraiser (
+            _fundOwner,
+            _tokenAmount,
+            _timeAmount
+        );
     }
 
     function fundTokens(
@@ -62,13 +93,16 @@ contract WiseFundRaiser {
             block.timestamp < TIMESTAMP,
             'WiseFundRaiser: closed'
         );
-
+        
+        uint256 refundAmount;
         uint256 tokenAmount = _tokenAmount;
+
+        //how are we declaring this conditional statement if there is no value of total funded. I don't see anywhere where we are calculating a value for total funded.
 
         if (totalFunded + _tokenAmount > THRESHOLD) {
 
             uint256 requiredAmount = THRESHOLD - totalFunded;
-            uint256 refundAmount = _tokenAmount - requiredAmount;
+            refundAmount = _tokenAmount - requiredAmount;
 
             tokenAmount = requiredAmount;
 
@@ -85,6 +119,11 @@ contract WiseFundRaiser {
         balanceMap[msg.sender] + tokenAmount;
 
         // emit
+        emit Fund(
+            msg.sender,
+            tokenAmount,
+            refundAmount
+        );
     }
 
     function refundTokens()
@@ -108,7 +147,10 @@ contract WiseFundRaiser {
             refundAmount
         );
 
-        // emit
+        emit Refund (
+            msg.sender,
+            refundAmount
+        );
     }
 
     function claimToken()
@@ -123,13 +165,44 @@ contract WiseFundRaiser {
             totalFunded >= THRESHOLD,
             'WiseFundRaiser: funds not raised'
         );
-
-        WISE_TOKEN.transfer(
-            FUND_OWNER,
-            totalFunded
+    
+    //can only claim it once 
+        require(
+            callCounter < 1
         );
 
+        callCounter = 
+        callCounter + 1;
+      
+      //doing it through boolean   
+        require (
+            hasBeenClaimed == false
+        );
+        
+            hasBeenClaimed == true; 
+        
+        //only fundowner can claim it 
+        
+        uint256 _totalFunded = totalFunded;
+        totalFunded = 0;
+        
+        WISE_TOKEN.transfer(
+            FUND_OWNER,
+            _totalFunded
+        );
+    
+    //can also prevent second claim by reseting the totalfunded to 0 
+    //this will be prone to attach for reentracy 
+        totalFunded = 0; 
+        
+    //or delete totalFunded;
+
+//do these have to be the same parameter as within the function? 
         // emit
+        emit Claim (
+            FUND_OWNER,
+            _totalFunded
+        );
     }
 
     function _refundTokens(
@@ -139,6 +212,11 @@ contract WiseFundRaiser {
         private
     {
         WISE_TOKEN.transfer(
+            _refundAddress,
+            _refundAmount
+        );
+        
+        emit Refund(
             _refundAddress,
             _refundAmount
         );

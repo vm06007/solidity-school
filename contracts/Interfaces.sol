@@ -8,7 +8,7 @@ interface ITokenContract {
         address _to,
         uint256 _value
     )
-        external
+        public
         returns
     (
         bool success
@@ -19,7 +19,7 @@ interface ITokenContract {
         address _to,
         uint256 _value
     )
-        external
+        public
         returns
     (
         bool success

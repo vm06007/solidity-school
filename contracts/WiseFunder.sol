@@ -110,33 +110,6 @@ contract WiseFunder {
         );
     }
 
-    function _fundTokens(
-        address _funderAddress,
-        address _contractAddress,
-        uint256 _funderAmount
-    )
-        private
-    {
-        WISE_TOKEN.transferFrom(
-            _funderAddress,
-            _contractAddress,
-            _funderAmount
-        );
-
-        _traceBalanceMap(
-            _funderAddress,
-            _funderAmount
-        );
-
-        totalFunded =
-        totalFunded + _funderAmount;
-
-        emit FundsAdded(
-            _funderAddress,
-            _funderAmount
-        );
-    }
-
     function claimToken()
         external
         onlyOwner
@@ -176,6 +149,35 @@ contract WiseFunder {
         _refundTokens(
             msg.sender,
             balanceMap[msg.sender]
+        );
+    }
+
+    // PRIVATE FUNCTIONS
+
+    function _fundTokens(
+        address _funderAddress,
+        address _contractAddress,
+        uint256 _funderAmount
+    )
+        private
+    {
+        WISE_TOKEN.transferFrom(
+            _funderAddress,
+            _contractAddress,
+            _funderAmount
+        );
+
+        _traceBalanceMap(
+            _funderAddress,
+            _funderAmount
+        );
+
+        totalFunded =
+        totalFunded + _funderAmount;
+
+        emit FundsAdded(
+            _funderAddress,
+            _funderAmount
         );
     }
 

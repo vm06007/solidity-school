@@ -14,7 +14,7 @@ module.exports = async function(deployer) {
             TOKEN,
             OWNER,
             THRESHOLD,
-            TIMESTAMP
+            TIMESTAMP,
             {gas: 8000000}
         )
     ]);
